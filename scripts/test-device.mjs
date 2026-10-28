@@ -58,14 +58,16 @@ test('regional streaming apps stay distinct and system helpers stay hidden', () 
   h.requests[0].ok([
     { id: 'Owner12345.Home', name: 'My Home', show: true },
     { id: '9Ur5IzDKqV.TizenYouTube', name: 'YouTube', show: false },
+    { id: '111299000516', name: 'Crunchyroll', show: false },
     { id: 'PvWgqxV3Xa.YouTubeTV', name: 'YouTube TV', show: false },
     { id: 'cj37Ni3qXM.HBONow', name: 'HBO Max', show: false },
     { id: '2022ePop01.SmartTV', name: 'Smart TV', show: true },
     { id: 'd0m1lV1nt2.emanual', name: 'User Guide', show: true },
     { id: 'Hidden1234.Consumer', name: 'Hidden app', show: false }
   ]);
-  assert.equal(apps.length, 3);
+  assert.equal(apps.length, 4);
   assert.equal(apps.find(a => a.name === 'YouTube').brand, 'youtube');
+  assert.equal(apps.find(a => a.name === 'Crunchyroll').brand, 'crunchyroll');
   assert.equal(apps.find(a => a.name === 'YouTube TV').brand, '');
   assert.equal(apps.find(a => a.name === 'HBO Max').brand, 'hbomax');
 });
@@ -78,4 +80,13 @@ test('launch keeps its eight-second deadline independently of discovery', () => 
   assert.match(results[0].message, /did not respond/);
   h.launches[0].ok();
   assert.equal(results.length, 1);
+});
+
+test('TV source items report that switching is unavailable without a launch', () => {
+  const h = harness(), results = [];
+  h.device.source('hdmi1', error => results.push(error));
+  assert.equal(results.length, 1);
+  assert.match(results[0].message, /not available/);
+  assert.match(results[0].detail, /No source was changed/);
+  assert.equal(h.launches.length, 0);
 });
