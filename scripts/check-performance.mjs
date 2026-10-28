@@ -85,9 +85,12 @@ try {
   page.on('requestfailed', request => { if (!page.__closing && request.failure()?.errorText !== 'net::ERR_ABORTED') report.errors.push(request.failure()?.errorText + ' ' + request.url()); });
   await page.addInitScript(() => {
     const primary = [
-      ['IkWsFHtOY9.Stremio', 'Stremio'], ['org.tizen.netflix-app', 'Netflix'], ['MCmYXNxgcu.DisneyPlus', 'Disney+'],
-      ['9Ur5IzDKqV.TizenYouTube', 'YouTube'], ['com.samsung.tv.aria-video', 'Apple TV'], ['org.tizen.primevideo', 'Prime Video'],
-      ['mWK87Xghap.ABCiview', 'ABC iview'], ['OyE7OuxlUi.SBSOnDemand', 'SBS On Demand'], ['org.tizen.apple.apple-music', 'Apple Music']
+      ['111299000516', 'Crunchyroll'], ['IkWsFHtOY9.Stremio', 'Stremio'],
+      ['9Ur5IzDKqV.TizenYouTube', 'YouTube'], ['org.tizen.netflix-app', 'Netflix'],
+      ['org.tizen.primevideo', 'Prime Video'], ['MCmYXNxgcu.DisneyPlus', 'Disney+'],
+      ['5b8c3eb16b.BeamCTVDev', 'HBO Max'], ['com.samsung.tv.aria-video', 'Apple TV'],
+      ['mWK87Xghap.ABCiview', 'ABC iview'], ['OyE7OuxlUi.SBSOnDemand', 'SBS On Demand'],
+      ['org.tizen.apple.apple-music', 'Apple Music']
     ];
     const catalogue = primary.map(([id, name]) => ({ id, name, show: true, iconPath: '' }));
     for (let i = 0; i < 14; i++) catalogue.push({ id: 'Qa12345678.Stream' + i, name: 'Streaming app ' + String(i + 1).padStart(2, '0'), show: true, iconPath: '' });
@@ -95,7 +98,7 @@ try {
       getAppsInfo(ok) { setTimeout(() => ok(catalogue), 0); },
       launch(id, ok) { setTimeout(ok, 0); }
     } };
-    localStorage.setItem('cleanframe.home.v1', JSON.stringify({ dock: ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'abciview', 'sbs', 'applemusic'], wallpaper: 'misty', mode: 'fixed', theme: 'shore', lastApp: 'netflix' }));
+    localStorage.setItem('cleanframe.home.v1', JSON.stringify({ dock: ['crunchyroll', 'stremio', 'youtube', 'netflix', 'primevideo', 'disneyplus', 'hbomax'], wallpaper: 'misty', mode: 'fixed', theme: 'shore', lastApp: 'netflix' }));
   });
   cdp = await page.context().newCDPSession(page);
   await cdp.send('Performance.enable');
@@ -116,10 +119,10 @@ try {
   await scene('settings');
   await sample('Settings navigation', ['down', 'down', 'up', 'up']);
   await scene('apps');
-  check('Performance inventory includes 23 real-adapter rows', (await call('state')).catalog.ids.length === 23);
+  check('Performance inventory includes 25 real-adapter rows', (await call('state')).catalog.ids.length === 25);
   await sample('All Apps grid navigation', ['down', 'down', 'right', 'up', 'up', 'left']);
   await scene('editor');
-  await sample('Apps on Home navigation', ['down', 'down', 'down', 'up', 'up', 'up']);
+  await sample('Home items navigation', ['down', 'down', 'down', 'up', 'up', 'up']);
   await call('activate', 'editor.move.netflix');
   await sample('Picked-up app movement', ['down', 'up'], 6);
   await call('nav', 'back');

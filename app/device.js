@@ -2,9 +2,10 @@
 (function () {
   'use strict';
   var IDS = {
-    stremio: 'IkWsFHtOY9.Stremio', netflix: 'org.tizen.netflix-app',
-    disneyplus: 'MCmYXNxgcu.DisneyPlus', youtube: '9Ur5IzDKqV.TizenYouTube',
-    appletv: 'com.samsung.tv.aria-video', primevideo: 'org.tizen.primevideo',
+    crunchyroll: '111299000516', stremio: 'IkWsFHtOY9.Stremio',
+    youtube: '9Ur5IzDKqV.TizenYouTube', netflix: 'org.tizen.netflix-app',
+    primevideo: 'org.tizen.primevideo', disneyplus: 'MCmYXNxgcu.DisneyPlus',
+    hbomax: '5b8c3eb16b.BeamCTVDev', appletv: 'com.samsung.tv.aria-video',
     abciview: 'mWK87Xghap.ABCiview', sbs: 'OyE7OuxlUi.SBSOnDemand',
     applemusic: 'org.tizen.apple.apple-music'
   };
@@ -43,6 +44,16 @@
     try { api().launch(id, function () { finish(null); }, function (err) { finish(failure(err)); }); }
     catch (err) { finish(failure(err)); }
   }
+  function source(input, done) {
+    if (['tv', 'hdmi1', 'hdmi2', 'hdmi3'].indexOf(input) < 0) {
+      done({ message: 'Unknown TV source item.', detail: 'No source was changed.' });
+      return;
+    }
+    done({
+      message: 'Source switching is not available in this build.',
+      detail: 'The browser preview cannot change TV inputs. No source was changed.'
+    });
+  }
   function launch(brand, done) {
     if (!IDS[brand]) { done({message: 'This app has no launch target.'}); return; }
     launchApp(IDS[brand], done);
@@ -80,5 +91,5 @@
       }, function (err) { finish(failure(err)); });
     } catch (err) { finish(failure(err)); }
   }
-  window.FrameDevice = { launch: launch, launchApp: launchApp, art: art, home: home, settings: settings, apps: apps };
+  window.FrameDevice = { launch: launch, launchApp: launchApp, source: source, art: art, home: home, settings: settings, apps: apps };
 }());

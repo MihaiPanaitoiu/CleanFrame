@@ -4,27 +4,38 @@
 
   /* ---------- Bundled data ---------- */
   var ASSETS = 'assets/', ICONS = ASSETS + 'icons/', WP = ASSETS + 'wallpapers/';
-  var CAP = 9, SCRIM_Y = 560;
+  var CAP = 11, SCRIM_Y = 560;
   var DOCK_MODES = { both: { tw: 288, th: 200, pitch: 296 }, text: { tw: 288, th: 104, pitch: 296 }, icons: { tw: 176, th: 144, pitch: 184 } };
   var GRID_ROW = 240, GRID_COL = 344, COLS = 5;
   var ED_ROW = 80, ED_SEP = 56, ED_VIEW = 752;
   var PH_TOP = 220, PH_PITCH = 128, PH_FULL = 5, PH_HEIGHT = 944, PH_COMPACT_TOP = 144, PH_COMPACT_PITCH = 88, PH_COMPACT_VISIBLE = 9;
   var WALL_VISIBLE = 6, WALL_ROW = 92, WALL_DELAY = 200;
   var KEYS = { 37: 'left', 38: 'up', 39: 'right', 40: 'down', 13: 'ok', 27: 'back', 8: 'back', 10009: 'back', 461: 'back' };
-  var FULL = 'Home holds nine apps. Remove one first.', LAST = 'Home needs one app';
+  var FULL = 'Home holds eleven items. Remove one first.', LAST = 'Home needs one item';
 
   var PRIMARY_APPS = [
+    { id: 'crunchyroll', name: 'Crunchyroll', mark: false, appId: '111299000516' },
     { id: 'stremio', name: 'Stremio', mark: true, appId: 'IkWsFHtOY9.Stremio' },
-    { id: 'netflix', name: 'Netflix', mark: true, appId: 'org.tizen.netflix-app' },
-    { id: 'disneyplus', name: 'Disney+', mark: true, appId: 'MCmYXNxgcu.DisneyPlus' },
     { id: 'youtube', name: 'YouTube', mark: true, appId: '9Ur5IzDKqV.TizenYouTube' },
-    { id: 'appletv', name: 'Apple TV', mark: true, appId: 'com.samsung.tv.aria-video' },
+    { id: 'netflix', name: 'Netflix', mark: true, appId: 'org.tizen.netflix-app' },
     { id: 'primevideo', name: 'Prime Video', mark: true, appId: 'org.tizen.primevideo' },
+    { id: 'disneyplus', name: 'Disney+', mark: true, appId: 'MCmYXNxgcu.DisneyPlus' },
+    { id: 'hbomax', name: 'HBO Max', mark: true, appId: '5b8c3eb16b.BeamCTVDev' },
+    { id: 'appletv', name: 'Apple TV', mark: true, appId: 'com.samsung.tv.aria-video' },
     { id: 'abciview', name: 'ABC iview', mark: true, appId: 'mWK87Xghap.ABCiview' },
     { id: 'sbs', name: 'SBS On Demand', mark: true, appId: 'OyE7OuxlUi.SBSOnDemand' },
     { id: 'applemusic', name: 'Apple Music', mark: true, appId: 'org.tizen.apple.apple-music' }
   ];
-  var PRIMARY = PRIMARY_APPS.map(function (a) { return a.id; }), APPS = PRIMARY_APPS.slice(), ALPHA = [];
+  var SOURCE_ITEMS = [
+    { id: 'source_tv', name: 'TV', source: 'tv', mark: false },
+    { id: 'source_hdmi1', name: 'HDMI 1', source: 'hdmi1', mark: false },
+    { id: 'source_hdmi2', name: 'HDMI 2', source: 'hdmi2', mark: false },
+    { id: 'source_hdmi3', name: 'HDMI 3', source: 'hdmi3', mark: false }
+  ];
+  var SOURCE_IDS = SOURCE_ITEMS.map(function (a) { return a.id; });
+  var DEFAULT_HOME = ['source_tv', 'crunchyroll', 'stremio', 'youtube', 'netflix', 'primevideo', 'disneyplus', 'hbomax', 'source_hdmi1', 'source_hdmi2', 'source_hdmi3'];
+  var LEGACY_DEFAULT_HOME = ['stremio', 'netflix', 'disneyplus', 'youtube', 'appletv', 'primevideo', 'abciview', 'sbs', 'applemusic'];
+  var PRIMARY = PRIMARY_APPS.map(function (a) { return a.id; }), APPS = PRIMARY_APPS.concat(SOURCE_ITEMS), ALPHA = [];
   var WALLS = window.CleanFrameWallpapers || [{ id: 'misty', name: 'Misty coast', tone: 'light', ut: { tr: 'mist', br: 'mist' }, frostVeil: .20 }];
   var ADAPTIVE_INK = window.CleanFrameAdaptiveInk || {};
   WALLS.forEach(function (w) { w.ut = w.ut || { tr: 'light', br: 'light' }; w.frostVeil = w.frostVeil || .12; });
@@ -329,16 +340,19 @@
   function clean(saved) {
     var s = saved && typeof saved === 'object' ? saved : {}, modern = s.look && typeof s.look === 'object' ? s.look : s;
     var legacyList = s.theme === 'list', h = [], recent = [], records = Array.isArray(s.appRecords) ? s.appRecords : [];
+    var savedHome = Array.isArray(s.home) ? s.home : Array.isArray(s.dock) ? s.dock : [];
+    var migrateDefault = same(savedHome, LEGACY_DEFAULT_HOME);
     records.slice(0, 256).forEach(function (a) {
       if (!a || !safeId(a.id) || !safeId(a.appId) || typeof a.name !== 'string' || !a.name.trim() || app(a.id)) return;
       APPS.push({ id: a.id, appId: a.appId, name: a.name.slice(0, 160), brand: ['hbomax', 'spotify', 'tubi'].indexOf(a.brand) >= 0 ? a.brand : '', mark: ['hbomax', 'spotify', 'tubi'].indexOf(a.brand) >= 0, icon: safeIcon(a.icon) });
     });
-    (Array.isArray(s.home) ? s.home : Array.isArray(s.dock) ? s.dock : []).forEach(function (id) {
+    if (migrateDefault) h = DEFAULT_HOME.slice();
+    else savedHome.forEach(function (id) {
       if (!safeId(id) || h.indexOf(id) >= 0 || h.length >= CAP) return;
       if (!app(id) && id.indexOf('.') > 0) APPS.push({ id: id, appId: id, name: id.split('.').pop(), mark: false });
       if (app(id)) h.push(id);
     });
-    if (!h.length) h = PRIMARY.slice();
+    if (!h.length) h = DEFAULT_HOME.slice();
     (Array.isArray(s.recent) ? s.recent : []).forEach(function (id) { if (safeId(id) && app(id) && h.indexOf(id) < 0 && recent.indexOf(id) < 0 && recent.length < 5) recent.push(id); });
     return {
       bg: pick(modern.bg, LOOK_VALUES.bg, legacyList ? 'dark' : 'photo'), layout: pick(modern.layout, LOOK_VALUES.layout, legacyList ? 'list' : 'dock'),
@@ -357,7 +371,7 @@
     out.appRecords = [];
     c.home.concat(c.recent).forEach(function (key) {
       var a = app(key);
-      if (a && PRIMARY.indexOf(key) < 0 && !out.appRecords.some(function (r) { return r.id === key; })) out.appRecords.push({ id: a.id, appId: a.appId, name: a.name, brand: a.brand || '', icon: a.icon || '' });
+      if (a && PRIMARY.indexOf(key) < 0 && SOURCE_IDS.indexOf(key) < 0 && !out.appRecords.some(function (r) { return r.id === key; })) out.appRecords.push({ id: a.id, appId: a.appId, name: a.name, brand: a.brand || '', icon: a.icon || '' });
     });
     return out;
   }
@@ -459,9 +473,12 @@
   function launch(id) {
     var a = app(id), c;
     if (!a || busy) return;
-    if (S.c.home.indexOf(id) >= 0) { c = next(S.c.home.slice(), S.c.recent.slice()); c.lastApp = id; write(c, 'Last app'); }
+    if (S.c.home.indexOf(id) >= 0 && !a.source) { c = next(S.c.home.slice(), S.c.recent.slice()); c.lastApp = id; write(c, 'Last app'); }
     S.press = id; S.lastLaunch = a.name;
-    perform(a.name, function (done) { FrameDevice.launchApp(a.appId, done); });
+    perform(a.name, function (done) {
+      if (a.source) FrameDevice.source(a.source, done);
+      else FrameDevice.launchApp(a.appId, done);
+    });
   }
   function refreshCatalog() {
     var request, oldFocus;
@@ -474,13 +491,15 @@
       oldFocus = top().id === 'apps' ? ALPHA[top().f.i] : null;
       ALPHA = [];
       entries.forEach(function (entry) {
-        var id = PRIMARY.indexOf(entry.brand) >= 0 ? entry.brand : entry.appId, a;
+        var id = PRIMARY.indexOf(entry.brand) >= 0 ? entry.brand : entry.appId, a, primaryIndex;
         if (!safeId(id) || !safeId(entry.appId) || ALPHA.indexOf(id) >= 0) return;
         a = app(id);
         if (!a) { a = { id: id }; APPS.push(a); }
-        a.appId = entry.appId; a.brand = entry.brand || ''; a.mark = !!entry.brand;
+        primaryIndex = PRIMARY.indexOf(id);
+        a.appId = entry.appId; a.brand = entry.brand || '';
+        a.mark = primaryIndex >= 0 ? PRIMARY_APPS[primaryIndex].mark : !!entry.brand;
         a.icon = safeIcon(entry.icon);
-        a.name = PRIMARY.indexOf(id) >= 0 ? PRIMARY_APPS[PRIMARY.indexOf(id)].name : String(entry.name).slice(0, 160);
+        a.name = primaryIndex >= 0 ? PRIMARY_APPS[primaryIndex].name : String(entry.name).slice(0, 160);
         ALPHA.push(id);
       });
       ALPHA.sort(function (a, b) { return app(a).name.toLowerCase().localeCompare(app(b).name.toLowerCase()); });
@@ -682,7 +701,7 @@
 
   /* ---------- Installed apps ---------- */
   function appsItems() { return catalog.error ? [] : ALPHA; }
-  function appsHead() { return catalog.error ? [['retry', 'Try again', '', '']] : [['editor', 'Apps on Home', '', 'home']]; }
+  function appsHead() { return catalog.error ? [['retry', 'Try again', '', '']] : [['editor', 'Home items', '', 'home']]; }
   V.apps = {
     sheet: true,
     norm: function (t) {
@@ -711,7 +730,8 @@
   /* ---------- B: two-zone Home editor ---------- */
   function otherGroups() {
     var rec = S.c.recent.filter(function (id) { return !onHome(id) && app(id); });
-    return { recent: rec, rest: ALPHA.filter(function (id) { return !onHome(id) && rec.indexOf(id) < 0; }) };
+    var available = ALPHA.concat(SOURCE_IDS);
+    return { recent: rec, rest: available.filter(function (id) { return !onHome(id) && rec.indexOf(id) < 0; }) };
   }
   function otherList() { var o = otherGroups(); return o.recent.concat(o.rest); }
   function editorCut() { return 5; }
@@ -820,7 +840,7 @@
       { id: 'layout', label: 'Layout', value: VALUE_NAMES[S.c.layout] },
       { id: 'typography', label: 'Typography', value: FONTS[S.c.font].name },
       { id: 'focus', label: 'Focus', value: VALUE_NAMES[S.c.focus] + (materialApplies() ? ', ' + VALUE_NAMES[S.c.material] : '') },
-      { id: 'editor', label: 'Apps on Home', value: n + (n === 1 ? ' app' : ' apps') },
+      { id: 'editor', label: 'Home items', value: n + (n === 1 ? ' item' : ' items') },
       { id: 'samsung', label: 'Samsung', value: 'Home and TV settings' }];
   }
   function settingsIds() { return settingsRows().map(function (r) { return r.id; }); }
@@ -1507,7 +1527,7 @@
         + '<div class="row-cue grid-before" data-slot="before" aria-hidden="true">' + icon('up') + '</div><div class="row-cue grid-after" data-slot="after" aria-hidden="true">' + icon('down') + '</div>';
     },
     editor: function () {
-      return '<h2 class="s-title">Apps on Home</h2><p class="s-sub" data-slot="sub"></p><div class="s-head" data-slot="head"></div>'
+      return '<h2 class="s-title">Home items</h2><p class="s-sub" data-slot="sub"></p><div class="s-head" data-slot="head"></div>'
         + '<p class="s-label z-home" data-slot="lh"></p><p class="s-label z-other">Not on Home</p>'
         + '<div class="ed-home" data-slot="home"></div><div class="ed-order-break" data-slot="break">Then scroll</div><div class="ed-other-view" data-slot="ov"><div class="ed-other" data-slot="other"></div></div><div class="ed-origin" data-slot="origin"></div>'
         + '<div class="row-cue editor-before" data-slot="otherBefore" aria-hidden="true">' + icon('up') + '</div><div class="row-cue editor-after" data-slot="otherAfter" aria-hidden="true">' + icon('down') + '</div>';
@@ -1547,7 +1567,7 @@
     editor: function (t, el) {
       var f = t.f, H = t.lifted ? t.lifted.order : S.c.home, O = otherGroups(), list = O.recent.concat(O.rest), full = S.c.home.length >= CAP;
       var entries = [], ys = [], y = 0, yf, minTop, maxTop = 0, rowEnd, before = false, afterRows = false;
-      var hint = catalog.error ? catalog.error : catalog.loading ? 'Loading installed apps…' : f.zone === 'head' && f.h === 0 ? undoCaption() : f.zone === 'home' && f.part === 'remove' ? (H.length <= 1 ? LAST : app(H[f.i]).name + ' stays installed.') : '';
+      var hint = catalog.error ? catalog.error : catalog.loading ? 'Loading installed apps…' : f.zone === 'head' && f.h === 0 ? undoCaption() : f.zone === 'home' && f.part === 'remove' ? (H.length <= 1 ? LAST : app(H[f.i]).source ? 'Source stays available.' : app(H[f.i]).name + ' stays installed.') : '';
       setHTML(el.sub, editStatus(hint, t.lifted ? 'Moving ' + app(t.lifted.id).name + '. OK places it, Back puts it back.' : ''));
       setHTML(el.head, headButtons([['undo', 'Undo', S.undo.length ? '' : 'is-idle', 'undo'], ['done', 'Done', '', 'check']], f.zone === 'head' ? f.h : -1, 'editor'));
       el.head.className = 's-head' + (f.zone === 'head' ? ' is-awake' : '');
@@ -1572,7 +1592,7 @@
 
       if (O.recent.length) { entries.push({ key: 'sep-recent', sep: 'Recently removed', y: y }); y += ED_SEP; }
       O.recent.forEach(function (id) { entries.push({ key: id, id: id, y: y }); ys.push(y); y += ED_ROW; });
-      if (O.recent.length && O.rest.length) { entries.push({ key: 'sep-rest', sep: 'Other installed apps', y: y }); y += ED_SEP; }
+      if (O.recent.length && O.rest.length) { entries.push({ key: 'sep-rest', sep: 'Other available items', y: y }); y += ED_SEP; }
       O.rest.forEach(function (id) { entries.push({ key: id, id: id, y: y }); ys.push(y); y += ED_ROW; });
       if (f.zone === 'other' && ys.length) {
         yf = ys[f.j] - (O.recent.length && (f.j === 0 || f.j === O.recent.length) ? ED_SEP : 0);
